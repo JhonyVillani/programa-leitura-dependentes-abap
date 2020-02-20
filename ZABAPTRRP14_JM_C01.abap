@@ -12,13 +12,15 @@ CLASS lcl_dependentes DEFINITION.
 *   Estrutura para moldar tabela de saída do ALV
     TYPES:
         BEGIN OF ty_s_dependentes,
-          pernr  TYPE pa0002-pernr,
-          nachn  TYPE pa0002-nachn,
-          stext  TYPE t591s-stext,
-          fcnam  TYPE pa0021-fcnam,
-          fgbdt  TYPE pa0021-fgbdt,
-*          fasex  TYPE pa0021-fasex,
-*          idade  TYPE i,
+          pernr TYPE pa0002-pernr,
+          cname TYPE pa0002-cname,
+          stext TYPE t591s-stext,
+          fcnam TYPE pa0021-fcnam,
+          fgbdt TYPE pa0021-fgbdt,
+          salfa TYPE p0397-salfa,
+          irflg TYPE p0397-irflg,
+          estud TYPE p0397-estud,
+          icnum TYPE p0397-icnum,
 
         END OF ty_s_dependentes.
 
@@ -60,8 +62,9 @@ CLASS lcl_dependentes IMPLEMENTATION.
 
   METHOD processa.
 
-    DATA: ls_p0021 TYPE p0021,
-          ls_p0002 TYPE p0002.
+    DATA: ls_p0021 TYPE p0021, "Estrutura que trabalha com o infotipo
+          ls_p0002 TYPE p0002, "Estrutura que trabalha com o infotipo
+          ls_p0397 TYPE p0397. "Estrutura que trabalha com o infotipo
 
     LOOP AT p0021 INTO ls_p0021.
 *     Lê a primeira linha com subtipo igual na tabela populada por descrições
@@ -70,18 +73,21 @@ CLASS lcl_dependentes IMPLEMENTATION.
 *     Lendo a tabela pa0002 e para o primeiro registro trazer a matrículao e nome (index funciona porque só há uma pessoa associada aos dependentes)
       READ TABLE p0002 INTO ls_p0002 INDEX 1.
 
-      ms_dados-pernr = ls_p0002-pernr.
-      ms_dados-nachn = ls_p0002-nachn.
-      ms_dados-fcnam = ls_p0021-fcnam.
-      ms_dados-stext = gs_desc-stext.
-      ms_dados-fgbdt = ls_p0021-fgbdt.
-*      ms_dados-fasex = ls_p0021-fasex.
+*     Lendo a tabela pa0397 e para o primeiro registro e se possui mais um registro do mesmo tipo
+      READ TABLE p0397 INTO ls_p0397 WITH KEY subty = ls_p0021-subty "valida se é o mesmo subty
+                                              objps = ls_p0021-objps."valida se possui mais de um objeto (continuação), caso contrário vai pular dados
 
-*      CALL FUNCTION 'ZABAPTRF01_JM'
-*        EXPORTING
-*          iv_data_nasc = ls_p0021-fgbdt
-*        IMPORTING
-*          ev_idade     = ms_dados-idade.
+      ms_dados-pernr = ls_p0002-pernr. "p0002
+      ms_dados-cname = ls_p0002-cname. "p0002
+
+      ms_dados-fcnam = ls_p0021-fcnam. "p0021
+      ms_dados-stext = gs_desc-stext.  "p0021
+      ms_dados-fgbdt = ls_p0021-fgbdt. "p0021
+
+      ms_dados-salfa = ls_p0397-salfa. "p0397
+      ms_dados-irflg = ls_p0397-irflg. "p0397
+      ms_dados-estud = ls_p0397-estud. "p0397
+      ms_dados-icnum = ls_p0397-icnum. "p0397
 
       APPEND ms_dados TO mt_dados.
     ENDLOOP.
