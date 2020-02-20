@@ -12,8 +12,8 @@ CLASS lcl_dependentes DEFINITION.
 *   Estrutura para moldar tabela de saída do ALV
     TYPES:
         BEGIN OF ty_s_dependentes,
-          pernr  type pa0002-pernr,
-          nachn  type pa0002-nachn,
+          pernr  TYPE pa0002-pernr,
+          nachn  TYPE pa0002-nachn,
           stext  TYPE t591s-stext,
           fcnam  TYPE pa0021-fcnam,
           fgbdt  TYPE pa0021-fgbdt,
@@ -31,7 +31,9 @@ CLASS lcl_dependentes DEFINITION.
     DATA: ms_dados TYPE ty_s_dependentes.
 
 *   Variável obrigatória para chamar a função do ALV
-    DATA: mo_alv TYPE REF TO cl_salv_table.
+    DATA: mo_alv     TYPE REF TO cl_salv_table,
+          go_columns TYPE REF TO cl_salv_columns_table,
+          go_zebra   TYPE REF TO cl_salv_display_settings.
 
     METHODS:
    constructor,
@@ -59,12 +61,15 @@ CLASS lcl_dependentes IMPLEMENTATION.
   METHOD processa.
 
     DATA: ls_p0021 TYPE p0021,
-          ls_p0002 type p0002.
+          ls_p0002 TYPE p0002.
 
     LOOP AT p0021 INTO ls_p0021.
-*   Lê a primeira linha com subtipo igual na tabela populada por descrições
+*     Lê a primeira linha com subtipo igual na tabela populada por descrições
       READ TABLE gt_desc INTO gs_desc WITH KEY subty = ls_p0021-subty.
-      READ TABLE p0002 INTO ls_p0002 index 1.
+
+*     Lendo a tabela pa0002 e para o primeiro registro trazer a matrículao e nome (index funciona porque só há uma pessoa associada aos dependentes)
+      READ TABLE p0002 INTO ls_p0002 INDEX 1.
+
       ms_dados-pernr = ls_p0002-pernr.
       ms_dados-nachn = ls_p0002-nachn.
       ms_dados-fcnam = ls_p0021-fcnam.
@@ -93,10 +98,16 @@ CLASS lcl_dependentes IMPLEMENTATION.
       CHANGING
         t_table      = mt_dados.
 
+* Otimiza tamanho das colunas
+    go_columns = mo_alv->get_columns( ). "Retorna o objeto tipo coluna INSTANCIADO
+    go_columns->set_optimize( ).
+
+* Zebrar report
+    go_zebra = mo_alv->get_display_settings( ).
+    go_zebra->set_striped_pattern( abap_true ).
+
 *   Mostra o ALV
     mo_alv->display( ). "Imprime na tela do relatório ALV
-
-    "rp_provide_from_last p0001 space pn-begda pn-endda. "OPCIONAL macro que retorna ultimo registro válido para um infotipo/subtipo
 
   ENDMETHOD.                    "exibir
 
